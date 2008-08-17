@@ -5,10 +5,10 @@
 
 development:
   adapter: mysql
-  database: radiant_dev
+  host: localhost
+  database: ccx_dev
   username: root
   password:
-  socket: /tmp/mysql.sock
 
 test:
   adapter: mysql
@@ -19,7 +19,7 @@ test:
 
 production:
   adapter: mysql
-  database: radiant_live
-  username: root
-  password:
-  socket: /tmp/mysql.sock
+  host: mysql.cascadecross.com
+  database: ccx_prod
+  username: ryanr
+  password: rickerts
