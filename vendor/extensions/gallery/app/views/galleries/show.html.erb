@@ -1,0 +1,31 @@
+<% include_javascript 'dragdrop' %>
+<% include_javascript 'extensions/gallery/slider' %>
+<% include_javascript 'extensions/gallery/lightwindow' %>
+<% include_javascript 'extensions/gallery/lite_sortable'%>
+<% include_stylesheet 'extensions/gallery/admin/lightwindow/lightwindow' %>
+<% include_javascript 'extensions/gallery/admin/gallery' %>
+<% include_stylesheet 'extensions/gallery/admin/gallery' %>
+           
+<%= hidden_field_tag 'authenticity_token', form_authenticity_token if protect_against_forgery?  %>
+<h1 id="show_gallery"><%= @gallery.name %></h1>
+<% if flash[:gallery_external_html] -%>
+	<div id="external_html" style="margin-bottom:10px;"><%= flash[:gallery_external_html] %></div>
+<% end -%> 
+
+<%= gallery_toolbar %>	
+<%= gallery_zoom_slider %>  
+  
+<div class="clear">&nbsp;</div>
+
+<div>
+  <div class="gallery items list" id="gallery_items_panel">
+    <div style="height: 20px;margin-bottom: 10px;">
+      <div class="loading" style="text-align: center" style="display: none;">
+        <img src="/images/admin/spinner.gif" /> Loading items...
+      </div>
+    </div>
+    <div id="<%= @gallery.id %>" class="items">
+    </div>
+    <div class="clear"></div>    
+  </div>
+</div>
