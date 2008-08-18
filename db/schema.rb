@@ -24,6 +24,57 @@ ActiveRecord::Schema.define(:version => 21) do
     t.boolean "enabled",        :default => true
   end
 
+  create_table "galleries", :force => true do |t|
+    t.string   "name"
+    t.string   "slug"
+    t.string   "path"
+    t.text     "description"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.boolean  "hidden",         :default => false, :null => false
+    t.integer  "parent_id"
+    t.boolean  "external",       :default => false
+    t.integer  "children_count", :default => 0,     :null => false
+    t.integer  "created_by"
+    t.integer  "updated_by"
+    t.integer  "position"
+  end
+
+  create_table "gallery_importings", :force => true do |t|
+    t.integer  "gallery_id"
+    t.string   "path"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  create_table "gallery_item_infos", :force => true do |t|
+    t.integer  "gallery_item_id"
+    t.string   "name"
+    t.string   "value_string"
+    t.text     "value_text"
+    t.integer  "value_integer"
+    t.datetime "value_datetime"
+  end
+
+  create_table "gallery_items", :force => true do |t|
+    t.string   "filename"
+    t.string   "content_type"
+    t.text     "description"
+    t.integer  "gallery_id"
+    t.integer  "position"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.string   "name"
+    t.string   "extension"
+    t.integer  "size"
+    t.integer  "height"
+    t.integer  "width"
+    t.integer  "parent_id"
+    t.string   "thumbnail"
+    t.integer  "created_by"
+    t.integer  "updated_by"
+  end
+
   create_table "layouts", :force => true do |t|
     t.string   "name",          :limit => 100
     t.text     "content"
