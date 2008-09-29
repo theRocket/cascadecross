@@ -1,3 +1,5 @@
+/* @override http://cascadecross.com/stylesheets/zenlike.css */
+
 /*
 
 	zenlike1.0 by nodethirtythree design
@@ -269,7 +271,7 @@ vertical-align: middle;
 {
 position: relative;
 height: 109px;
-background: #fff url('../images/zenlike/hdrpic.jpg') no-repeat top left;
+background: #fff url('../images/patrick_tractorcx.jpg') no-repeat top left;
 margin-bottom: 2px;
 }
 
@@ -340,6 +342,13 @@ margin: 1.5em 22.0em 0em 0em;
 margin-top: 1.5em;
 float: right;
 width: 18.0em;
+}
+
+#secondarycontent ul li a.active
+{
+color: #000;
+font-weight: bold;
+text-decoration: none;
 }
 
 #footer
