@@ -32,11 +32,16 @@ line-height: 1.5em;
 margin-bottom: 1.0em;
 text-align: justify;
 }
+
+ul
+{
+list-style: none;
+}
+
 li
 {
 line-height: 1.5em;
 margin-bottom: 1.0em;
-text-align: justify;
 }
 
 a
@@ -179,6 +184,7 @@ list-style: none;
 ul.linklist li
 {
 line-height: 2.0em;
+margin-bottom: 0;
 }
 
 #upbg
