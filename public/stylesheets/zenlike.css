@@ -1,4 +1,7 @@
-/* @override http://cascadecross.com/stylesheets/zenlike.css */
+/* @override 
+	http://cascadecross.com/stylesheets/zenlike.css
+	http://localhost:3000/stylesheets/zenlike.css
+*/
 
 /*
 
@@ -229,6 +232,13 @@ bottom: 0em;
 padding: 0em 2.0em 1.3em 2.0em;
 }
 
+#headercontent img
+{
+	border: 0;
+	position: absolute;
+	bottom: 5px;
+	left: 20px;
+}
 #headercontent h1
 {
 font-weight: normal;
@@ -285,6 +295,12 @@ position: relative;
 height: 109px;
 background: #fff url('../images/patrick_tractorcx.jpg') no-repeat top left;
 margin-bottom: 2px;
+text-align: right;
+}
+
+#headerpic img
+{
+	border: 0;
 }
 
 #menu
