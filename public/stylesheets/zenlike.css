@@ -32,16 +32,22 @@ line-height: 1.5em;
 margin-bottom: 1.0em;
 text-align: justify;
 }
+li
+{
+line-height: 1.5em;
+margin-bottom: 1.0em;
+text-align: justify;
+}
 
 a
 {
 color: #B96D00;
-text-decoration: underline;
+text-decoration: none;
 }
 
 a:hover
 {
-text-decoration: none;
+text-decoration: underline;
 }
 
 
