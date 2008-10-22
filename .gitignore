@@ -2,4 +2,5 @@ db/*.db
 log/*.log
 pkg
 tmp/**/*
+public/images/*
 .DS_Store
