@@ -137,10 +137,10 @@ color: #787878;
 .post .strongdetails
 {
 position: relative;
-top: -1.5em;
+top: -1.0em;
 font-size: 1.2em;
 font-weight: bold;
-text-decoration:underline;
+text-decoration: underline;
 color: #333;
 }
 
