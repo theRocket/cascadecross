@@ -4,3 +4,4 @@ pkg
 tmp/**/*
 public/images/*
 .DS_Store
+cache/*
