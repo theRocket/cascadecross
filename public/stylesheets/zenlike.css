@@ -177,6 +177,19 @@ background-image: url('../images/zenlike/icon-comments.gif');
 background-image: url('../images/zenlike/icon-more.gif');
 }
 
+.post ul.controls li a.flyer
+{
+background-image: url('../images/zenlike/race_flyer.png');
+}
+.post ul.controls li a.results
+{
+background-image: url('../images/zenlike/race_results.png');
+}
+.post ul.controls li a.gallery
+{
+background-image: url('../images/zenlike/race_gallery.png');
+}
+
 .box
 {
 position: relative;
