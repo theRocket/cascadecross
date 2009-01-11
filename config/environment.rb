@@ -1,7 +1,7 @@
 # Be sure to restart your server when you modify this file
 
 #recommended when Dreamhost upgraded Ruby to 1.8.7 http://www.dreamhoststatus.com/2009/01/02/ruby-187-upgrades/
-unless ‘1.9′.respond_to?(:force_encoding)
+unless '1.9'.respond_to?(:force_encoding)
   String.class_eval do
     begin
       remove_method :chars
