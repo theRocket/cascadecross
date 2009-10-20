@@ -29,6 +29,13 @@ Radiant::Initializer.run do |config|
   # extensions in vendor/extensions are loaded, in alphabetical order. :all
   # can be used as a placeholder for all extensions not explicitly named.
   # config.extensions = [ :all ]
+  
+  #for feed_reader extension, may not work due to native extensions
+  config.gem "nokogiri", :version => "1.3.3"
+  config.gem "pauldix-feedzirra", :version => "0.0.18", :lib => "feedzirra", :source => "http://gems.github.com"
+  config.gem "pauldix-sax-machine", :version => "0.0.14", :lib => "sax-machine", :source => "http://gems.github.com"
+  config.gem "taf2-curb", :version => "0.5.4.0", :lib => "curb", :source => "http://gems.github.com"
+  config.gem "mdalessio-dryopteris", :version => "0.1.2", :lib => "dryopteris", :source => "http://gems.github.com"
 
   # Your secret key for verifying cookie session data integrity.
   # If you change this key, all old sessions will become invalid!
@@ -59,7 +66,7 @@ Radiant::Initializer.run do |config|
   #    Sets the meta store type and storage location.  We recommend you use
   #    radiant: since this will enable manual expiration and acceleration headers.
   config.middleware.use ::Radiant::Cache
-
+        
   # Use the database for sessions instead of the cookie-based default,
   # which shouldn't be used to store highly confidential information
   # (create the session table with 'rake db:sessions:create')
