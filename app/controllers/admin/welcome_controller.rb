@@ -3,7 +3,7 @@ class Admin::WelcomeController < ApplicationController
   skip_before_filter :verify_authenticity_token
   
   def index
-    redirect_to page_index_url
+    redirect_to admin_pages_url
   end
   
   def login
@@ -24,7 +24,7 @@ class Admin::WelcomeController < ApplicationController
   
   def logout
     cookies[:session_token] = { :expires => 1.day.ago }
-    self.current_user.forget_me
+    self.current_user.forget_me if self.current_user
     self.current_user = nil
     announce_logged_out
     redirect_to login_url
@@ -37,7 +37,7 @@ class Admin::WelcomeController < ApplicationController
     end
     
     def announce_invalid_user
-      flash[:error] = 'Invalid username or password.'
+      flash.now[:error] = 'Invalid username or password.'
     end
     
 end

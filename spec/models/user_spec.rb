@@ -1,7 +1,7 @@
 require File.dirname(__FILE__) + '/../spec_helper'
 
 describe User, "validations" do
-  scenario :users
+  dataset :users
   test_helper :validations
   
   before :each do
@@ -15,6 +15,21 @@ describe User, "validations" do
     
     assert_invalid :email, '255-character limit', ('x' * 247) + '@test.com'
     assert_valid :email, ('x' * 246) + '@test.com'
+  end
+  
+  
+  describe "self.protected_attributes" do
+    it "should be an array of [:name, :email, :login, :password, :password_confirmation]" do
+      # Make sure we clean up after anything set in another spec
+      User.instance_variable_set(:@protected_attributes, nil)
+      User.protected_attributes.should == [:name, :email, :login, :password, :password_confirmation]
+    end
+  end
+  describe "self.protected_attributes=" do
+    it "should set the @@protected_attributes variable to the given array" do
+      User.protected_attributes = [:password, :email, :other]
+      User.protected_attributes.should == [:password, :email, :other]
+    end
   end
   
   it 'should validate length ranges' do
@@ -77,7 +92,7 @@ describe User, "validations" do
 end
 
 describe User do
-  scenario :users
+  dataset :users
   
   before :each do
     @user = User.new(user_params)
@@ -152,7 +167,7 @@ describe User do
 end
 
 describe User, "class methods" do
-  scenario :users
+  dataset :users
   
   it 'should authenticate with correct username and password' do
     expected = users(:existing)
@@ -166,5 +181,23 @@ describe User, "class methods" do
   
   it 'should not authenticate with bad user' do
     User.authenticate('nonexisting', 'password').should be_nil
+  end
+end
+
+describe User, "roles" do
+  dataset :users
+  
+  it "should not have a non-existent role" do
+    users(:existing).has_role?(:foo).should be_false
+  end
+  
+  it "should not have a role for which the corresponding method returns false" do
+    users(:existing).has_role?(:designer).should be_false
+    users(:existing).has_role?(:admin).should be_false
+  end
+  
+  it "should have a role for which the corresponding method returns true" do
+    users(:designer).has_role?(:designer).should be_true
+    users(:admin).has_role?(:admin).should be_true
   end
 end

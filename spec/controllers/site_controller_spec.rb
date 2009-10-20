@@ -1,13 +1,8 @@
 require File.dirname(__FILE__) + '/../spec_helper'
 
-describe SiteController, "routes page requests" do
-  scenario :pages
-                                   
-  before(:each) do     
-    # don't bork results with stale cache items
-    controller.cache.clear
-  end
-  
+describe SiteController do
+  dataset :pages
+
   it "should find and render home page" do
     get :show_page, :url => ''
     response.should be_success
@@ -28,7 +23,7 @@ describe SiteController, "routes page requests" do
 
   it "should show page not found" do
     get :show_page, :url => 'a/non-existant/page'
-    response.headers["Status"].should == "404 Not Found"
+    response.response_code.should == 404
     response.should render_template('site/not_found')
   end
 
@@ -78,45 +73,63 @@ describe SiteController, "routes page requests" do
     end
   end
 
-  it "should not have cache control header" do
-    get :show_page, :url => '/'
-    response.headers.keys.should_not include("Cache-Control")
-  end
-  
   it "should not require login" do
     lambda { get :show_page, :url => '/' }.should_not require_login
   end
-end
 
-describe SiteController, "when custom 404 pages are defined" do
-  scenario :file_not_found
-  
-  it "should use the top-most published 404 page by default" do
-    get :show_page, :url => "/foo"
-    response.should be_missing
-    assigns[:page].should == pages(:file_not_found)
+  describe "caching" do
+    it "should add a default Cache-Control header with public and max-age of 5 minutes" do
+      get :show_page, :url => '/'
+      response.headers['Cache-Control'].should =~ /public/
+      response.headers['Cache-Control'].should =~ /max-age=300/
+    end
     
-    get :show_page, :url => "/foo/bar"
-    response.should be_missing
-    assigns[:page].should == pages(:file_not_found)
-  end
-  
-  it "should use the first published custom 404 page defined under a parent page" do
-    get :show_page, :url => "/gallery/draft"
-    response.should be_missing
-    assigns[:page].should == pages(:no_picture)
-  end
-  
-  it "should not find hidden draft pages in live mode" do
-    get :show_page, :url => "/drafts/missing"
-    response.should be_missing
-    assigns[:page].should_not == pages(:lonely_draft_file_not_found)
-  end
-
-  it "should find hidden draft pages in dev mode" do
-    request.host = 'dev.mysite.com'
-    get :show_page, :url => "/drafts/missing"
-    response.should be_missing
-    assigns[:page].should == pages(:lonely_draft_file_not_found)
+    it "should pass along the etag set by the page" do
+      get :show_page, :url => '/'
+      response.headers['ETag'].should be
+    end
+    
+    %w{put post delete}.each do |method|
+      it "should prevent upstream caching on #{method.upcase} requests" do
+        send(method, :show_page, :url => '/')
+        response.headers['Cache-Control'].should =~ /private/
+        response.headers['Cache-Control'].should =~ /no-cache/
+        response.headers['ETag'].should be_blank
+      end
+    end
+    
+    it "should return a not-modified response when the sent etag matches" do
+      response.stub!(:etag).and_return("foobar")
+      request.if_none_match = 'foobar'
+      get :show_page, :url => '/'
+      response.response_code.should == 304
+      response.body.should be_blank
+    end
+    
+    it "should prevent upstream caching when the page should not be cached" do
+      @page = pages(:home)
+      Page.should_receive(:find_by_url).and_return(@page)
+      @page.should_receive(:cache?).and_return(false)
+      get :show_page, :url => '/'
+      response.headers['Cache-Control'].should =~ /private/
+      response.headers['Cache-Control'].should =~ /no-cache/
+      response.headers['ETag'].should be_blank
+    end
+    
+    it "should prevent upstream caching in dev mode" do
+      request.host = "dev.site.com"
+      
+      get :show_page, :url => '/'
+      response.headers['Cache-Control'].should =~ /private/
+      response.headers['Cache-Control'].should =~ /no-cache/
+      response.headers['ETag'].should be_blank
+    end
+    
+    it "should set the default cache timeout (max-age) to a value assigned by the user" do
+      SiteController.cache_timeout = 10.minutes
+      get :show_page, :url => '/'
+      response.headers['Cache-Control'].should =~ /public/
+      response.headers['Cache-Control'].should =~ /max-age=600/
+    end
   end
 end

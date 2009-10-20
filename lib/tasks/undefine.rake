@@ -1,5 +1,5 @@
 # Undefined unneeded tasks in instance mode
-unless File.directory? "#{RAILS_ROOT}/app"
+unless Radiant.app?
   def undefine_task(*names)
     app = Rake.application
     tasks = app.instance_variable_get('@tasks')
@@ -13,6 +13,10 @@ unless File.directory? "#{RAILS_ROOT}/app"
     radiant:release
     radiant:repackage
     radiant:uninstall_gem
+    radiant:import:prototype:styles
+    radiant:import:prototype:images
+    radiant:import:prototype:javascripts
+    radiant:import:prototype:assets
     rails:freeze:edge
     rails:freeze:gems
     rails:unfreeze

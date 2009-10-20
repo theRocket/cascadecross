@@ -1,8 +1,8 @@
 unless defined? SPEC_ROOT
   ENV["RAILS_ENV"] = "test"
-  
+
   SPEC_ROOT = File.expand_path(File.dirname(__FILE__))
-  
+
   unless defined? RADIANT_ROOT
     if env_file = ENV["RADIANT_ENV_FILE"]
       require env_file
@@ -12,9 +12,19 @@ unless defined? SPEC_ROOT
   end
   require 'spec'
   require 'spec/rails'
-  require 'scenarios'
-  
-  class Test::Unit::TestCase
+  require 'dataset'
+
+  module Kernel
+    def rputs(*args)
+      puts *["<pre>", args.collect {|a| CGI.escapeHTML(a.inspect)}, "</pre>"]
+    end
+  end
+
+  class ActiveSupport::TestCase
+    include Dataset
+    datasets_directory "#{RADIANT_ROOT}/spec/datasets"
+    Dataset::ContextClassMethods.datasets_database_dump_path = File.expand_path(RAILS_ROOT + '/tmp/dataset')
+
     class << self
       # Class method for test helpers
       def test_helper(*names)
@@ -33,32 +43,32 @@ unless defined? SPEC_ROOT
             retry
           end
         end
-      end    
+      end
       alias :test_helpers :test_helper
     end
   end
-  
+
   Dir[RADIANT_ROOT + '/spec/matchers/*_matcher.rb'].each do |matcher|
     require matcher
   end
-  
-  Scenario.load_paths.unshift "#{RADIANT_ROOT}/spec/scenarios"
-  
+
+  module Spec
+    module Application
+      module ExampleExtensions
+        def rails_log
+          log = IO.read(RAILS_ROOT + '/log/test.log')
+          log.should_not be_nil
+          log
+        end
+      end
+    end
+  end
+
   Spec::Runner.configure do |config|
+    config.include Spec::Application::ExampleExtensions
+
     config.use_transactional_fixtures = true
     config.use_instantiated_fixtures  = false
     config.fixture_path = RAILS_ROOT + '/spec/fixtures/'
-    
-    # You can declare fixtures for each behaviour like this:
-    #   describe "...." do
-    #     fixtures :table_a, :table_b
-    #
-    # Alternatively, if you prefer to declare them only once, you can
-    # do so here, like so ...
-    #
-    #   config.global_fixtures = :table_a, :table_b
-    #
-    # If you declare global fixtures, be aware that they will be declared
-    # for all of your examples, even those that don't use them.
   end
 end

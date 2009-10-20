@@ -1,0 +1,6 @@
+[submodule "vendor/plugins/dataset"]
+	path = vendor/plugins/dataset
+	url = git://github.com/aiwilliams/dataset.git
+[submodule "vendor/extensions/feed_reader"]
+	path = vendor/extensions/feed_reader
+	url = git://github.com/seancribbs/radiant-feed-reader-extension.git

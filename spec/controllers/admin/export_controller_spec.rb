@@ -1,10 +1,10 @@
 require File.dirname(__FILE__) + "/../../spec_helper"
 
 describe Admin::ExportController do
-  scenario :users_and_pages
+  dataset :users_and_pages
   
   before :each do
-    login_as :developer
+    login_as :designer
   end
   
   it "should export a YAML file" do

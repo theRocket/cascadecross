@@ -14,7 +14,7 @@ module Spec
             @matching = @expected
           end
           case
-            when @error_message: false
+            when @expected_error_message: false
             when @expected: @actual == @expected
             when @matching: @actual =~ @matching
             else true
@@ -38,7 +38,11 @@ module Spec
                 "expected page to #{action}, but got #{@actual.inspect}"
               end
             else
-              "expected rendering #{@content.inspect} to throw exception with message #{@expected_error_message.inspect}, but was #{@actual_error.message.inspect}"
+              if @actual_error
+                "expected rendering #{@content.inspect} to throw exception with message #{@expected_error_message.inspect}, but was #{@actual_error.message.inspect}"
+              else
+                "expected rendering #{@content.inspect} to throw exception with message #{@expected_error_message.inspect}, but no exception thrown. Rendered #{@actual.inspect} instead."
+              end
             end
           else
             "expected #{@content.inspect} to render, but an exception was thrown #{@actual_error.message}"
@@ -81,9 +85,10 @@ module Spec
         private
           def render_content_with_page(tag_content, page)
             page.request = ActionController::TestRequest.new
+            page.request.params[:sample_param] = 'data'
             page.request.request_uri = @request_uri || page.url
             page.request.host = @host || test_host
-            page.request.relative_url_root = @relative_root || "/"
+            ActionController::Base.relative_url_root = @relative_root
             page.response = ActionController::TestResponse.new
             if tag_content.nil?
               page.render

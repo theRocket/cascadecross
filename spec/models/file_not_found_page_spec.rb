@@ -1,7 +1,7 @@
 require File.dirname(__FILE__) + '/../spec_helper'
 
 describe FileNotFoundPage do
-  scenario :file_not_found
+  dataset :file_not_found
   test_helper :render
   
   before(:each) do
@@ -24,8 +24,8 @@ describe FileNotFoundPage do
     @page.should_not be_cache
   end
   
-  it 'should have the correct headers' do
-    assert_headers({'Status' => '404 Not Found'}, '/gallery/asdf')
+  it 'should return a 404 status code' do
+    @page.response_code.should == 404
   end
   
 end

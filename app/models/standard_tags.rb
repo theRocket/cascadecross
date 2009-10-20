@@ -9,6 +9,7 @@ module StandardTags
     Causes the tags referring to a page's attributes to refer to the current page.
 
     *Usage:*
+    
     <pre><code><r:page>...</r:page></code></pre>
   }
   tag 'page' do |tag|
@@ -36,6 +37,7 @@ module StandardTags
     Gives access to a page's children.
 
     *Usage:*
+    
     <pre><code><r:children>...</r:children></code></pre>
   }
   tag 'children' do |tag|
@@ -47,7 +49,9 @@ module StandardTags
     Renders the total number of children.
   }
   tag 'children:count' do |tag|
-    tag.locals.children.count
+    options = children_find_options(tag)
+    options.delete(:order) # Order is irrelevant
+    tag.locals.children.count(options)
   end
 
   desc %{
@@ -55,6 +59,7 @@ module StandardTags
     the first child. Takes the same ordering options as @<r:children:each>@.
 
     *Usage:*
+    
     <pre><code><r:children:first>...</r:children:first></code></pre>
   }
   tag 'children:first' do |tag|
@@ -71,6 +76,7 @@ module StandardTags
     the last child. Takes the same ordering options as @<r:children:each>@.
 
     *Usage:*
+    
     <pre><code><r:children:last>...</r:children:last></code></pre>
   }
   tag 'children:last' do |tag|
@@ -87,8 +93,10 @@ module StandardTags
     are mapped to the current child page.
 
     *Usage:*
-    <pre><code><r:children:each [offset="number"] [limit="number"] [by="attribute"] [order="asc|desc"]
-     [status="draft|reviewed|published|hidden|all"]>
+    
+    <pre><code><r:children:each [offset="number"] [limit="number"]
+     [by="published_at|updated_at|created_at|slug|title|keywords|description"]
+     [order="asc|desc"] [status="draft|reviewed|published|hidden|all"]>
      ...
     </r:children:each>
     </code></pre>
@@ -98,9 +106,12 @@ module StandardTags
     result = []
     children = tag.locals.children
     tag.locals.previous_headers = {}
-    children.find(:all, options).each do |item|
+    kids = children.find(:all, options)
+    kids.each_with_index do |item, i|
       tag.locals.child = item
       tag.locals.page = item
+      tag.locals.first_child = i == 0
+      tag.locals.last_child = i == kids.length - 1
       result << tag.expand
     end
     result
@@ -112,6 +123,7 @@ module StandardTags
     current child.
 
     *Usage:*
+    
     <pre><code><r:children:each>
       <r:child>...</r:child>
     </r:children:each>
@@ -121,7 +133,81 @@ module StandardTags
     tag.locals.page = tag.locals.child
     tag.expand
   end
+  
+  desc %{
+    Renders the tag contents only if the current page is the first child in the context of
+    a children:each tag
+    
+    *Usage:*
+    
+    <pre><code><r:children:each>
+      <r:if_first >
+        ...
+      </r:if_first>
+    </r:children:each>
+    </code></pre>
+    
+  }
+  tag 'children:each:if_first' do |tag|
+    tag.expand if tag.locals.first_child
+  end
 
+  
+  desc %{
+    Renders the tag contents unless the current page is the first child in the context of
+    a children:each tag
+    
+    *Usage:*
+    
+    <pre><code><r:children:each>
+      <r:unless_first >
+        ...
+      </r:unless_first>
+    </r:children:each>
+    </code></pre>
+    
+  }
+  tag 'children:each:unless_first' do |tag|
+    tag.expand unless tag.locals.first_child
+  end
+  
+  desc %{
+    Renders the tag contents only if the current page is the last child in the context of
+    a children:each tag
+    
+    *Usage:*
+    
+    <pre><code><r:children:each>
+      <r:if_last >
+        ...
+      </r:if_last>
+    </r:children:each>
+    </code></pre>
+    
+  }
+  tag 'children:each:if_last' do |tag|
+    tag.expand if tag.locals.last_child
+  end
+
+  
+  desc %{
+    Renders the tag contents unless the current page is the last child in the context of
+    a children:each tag
+    
+    *Usage:*
+    
+    <pre><code><r:children:each>
+      <r:unless_last >
+        ...
+      </r:unless_last>
+    </r:children:each>
+    </code></pre>
+    
+  }
+  tag 'children:each:unless_last' do |tag|
+    tag.expand unless tag.locals.last_child
+  end
+  
   desc %{
     Renders the tag contents only if the contents do not match the previous header. This
     is extremely useful for rendering date headers for a list of child pages.
@@ -135,6 +221,7 @@ module StandardTags
     separated list.
 
     *Usage:*
+    
     <pre><code><r:children:each>
       <r:header [name="header_name"] [restart="name1[;name2;...]"]>
         ...
@@ -162,6 +249,7 @@ module StandardTags
     Page attribute tags inside this tag refer to the parent of the current page.
 
     *Usage:*
+    
     <pre><code><r:parent>...</r:parent></code></pre>
   }
   tag "parent" do |tag|
@@ -175,6 +263,7 @@ module StandardTags
     is not the root page.
 
     *Usage:*
+    
     <pre><code><r:if_parent>...</r:if_parent></code></pre>
   }
   tag "if_parent" do |tag|
@@ -187,6 +276,7 @@ module StandardTags
     is the root page.
 
     *Usage:*
+    
     <pre><code><r:unless_parent>...</r:unless_parent></code></pre>
   }
   tag "unless_parent" do |tag|
@@ -201,6 +291,7 @@ module StandardTags
     non-virtual pages regardless of status.
 
     *Usage:*
+    
     <pre><code><r:if_children [status="published"]>...</r:if_children></code></pre>
   }
   tag "if_children" do |tag|
@@ -215,6 +306,7 @@ module StandardTags
     regardless of status.
 
     *Usage:*
+    
     <pre><code><r:unless_children [status="published"]>...</r:unless_children></code></pre>
   }
   tag "unless_children" do |tag|
@@ -228,6 +320,7 @@ module StandardTags
     multiple cycles; the default is @cycle@.
 
     *Usage:*
+    
     <pre><code><r:cycle values="first, second, third" [reset="true|false"] [name="cycle"] /></code></pre>
   }
   tag 'cycle' do |tag|
@@ -251,11 +344,19 @@ module StandardTags
     is set to true.
 
     *Usage:*
+    
     <pre><code><r:content [part="part_name"] [inherit="true|false"] [contextual="true|false"] /></code></pre>
   }
   tag 'content' do |tag|
     page = tag.locals.page
     part_name = tag_part_name(tag)
+    # Prevent simple and deep recursive rendering of the same page part
+    rendered_parts = (tag.locals.rendered_parts ||= Hash.new {|h,k| h[k] = []})
+    if rendered_parts[page.id].include?(part_name)
+      raise TagError.new(%{Recursion error: already rendering the `#{part_name}' part.})
+    else
+      rendered_parts[page.id] << part_name
+    end
     boolean_attr = proc do |attribute_name, default|
       attribute = (tag.attr[attribute_name] || default).to_s
       raise TagError.new(%{`#{attribute_name}' attribute of `content' tag must be set to either "true" or "false"}) unless attribute =~ /true|false/i
@@ -285,6 +386,7 @@ module StandardTags
     By default the @find@ attribute is set to @all@.
 
     *Usage:*
+    
     <pre><code><r:if_content [part="part_name, other_part"] [inherit="true"] [find="any"]>...</r:if_content></code></pre>
   }
   tag 'if_content' do |tag|
@@ -320,6 +422,7 @@ module StandardTags
     By default the @find@ attribute is set to @all@.
 
     *Usage:*
+    
     <pre><code><r:unless_content [part="part_name, other_part"] [inherit="false"] [find="any"]>...</r:unless_content></code></pre>
   }
   tag 'unless_content' do |tag|
@@ -352,6 +455,7 @@ module StandardTags
     match is case sensitive. By default, @ignore_case@ is set to true.
 
     *Usage:*
+
     <pre><code><r:if_url matches="regexp" [ignore_case="true|false"]>...</r:if_url></code></pre>
   }
   tag 'if_url' do |tag|
@@ -366,6 +470,7 @@ module StandardTags
     The opposite of the @if_url@ tag.
 
     *Usage:*
+
     <pre><code><r:unless_url matches="regexp" [ignore_case="true|false"]>...</r:unless_url></code></pre>
   }
   tag 'unless_url' do |tag|
@@ -382,6 +487,7 @@ module StandardTags
     This is typically used inside another tag (like &lt;r:children:each&gt;) to add conditional mark-up if the child element is or descends from the current page.
 
     *Usage:*
+
     <pre><code><r:if_ancestor_or_self>...</r:if_ancestor_or_self></code></pre>
   }
   tag "if_ancestor_or_self" do |tag|
@@ -394,6 +500,7 @@ module StandardTags
     This is typically used inside another tag (like &lt;r:children:each&gt;) to add conditional mark-up unless the child element is or descends from the current page.
 
     *Usage:*
+
     <pre><code><r:unless_ancestor_or_self>...</r:unless_ancestor_or_self></code></pre>
   }
   tag "unless_ancestor_or_self" do |tag|
@@ -406,6 +513,7 @@ module StandardTags
     This is typically used inside another tag (like &lt;r:children:each&gt;) to add conditional mark-up if the child element is the current page.
 
     *Usage:*
+
     <pre><code><r:if_self>...</r:if_self></code></pre>
   }
   tag "if_self" do |tag|
@@ -418,6 +526,7 @@ module StandardTags
     This is typically used inside another tag (like &lt;r:children:each&gt;) to add conditional mark-up unless the child element is the current page.
 
     *Usage:*
+
     <pre><code><r:unless_self>...</r:unless_self></code></pre>
   }
   tag "unless_self" do |tag|
@@ -442,6 +551,7 @@ module StandardTags
     current date/time, regardless of the  page.
 
     *Usage:*
+
     <pre><code><r:date [format="%A, %B %d, %Y"] [for="published_at"]/></code></pre>
   }
   tag 'date' do |tag|
@@ -460,7 +570,7 @@ module StandardTags
     else
       page.published_at || page.created_at
     end
-    adjust_time(date).strftime(format)
+    date.strftime(format)
   end
 
   desc %{
@@ -473,8 +583,11 @@ module StandardTags
     the @href@ attribute of the HTML @a@ tag--effectively making an HTML anchor.
 
     *Usage:*
+
     <pre><code><r:link [anchor="name"] [other attributes...] /></code></pre>
+    
     or
+    
     <pre><code><r:link [anchor="name"] [other attributes...]>link text here</r:link></code></pre>
   }
   tag 'link' do |tag|
@@ -493,6 +606,7 @@ module StandardTags
     breadcrumbs in plain text, without any links (useful when generating title tag).
 
     *Usage:*
+
     <pre><code><r:breadcrumbs [separator="separator_string"] [nolinks="true"] /></code></pre>
   }
   tag 'breadcrumbs' do |tag|
@@ -515,12 +629,14 @@ module StandardTags
     Renders the snippet specified in the @name@ attribute within the context of a page.
 
     *Usage:*
+
     <pre><code><r:snippet name="snippet_name" /></code></pre>
 
     When used as a double tag, the part in between both tags may be used within the
     snippet itself, being substituted in place of @<r:yield/>@.
 
     *Usage:*
+
     <pre><code><r:snippet name="snippet_name">Lorem ipsum dolor...</r:snippet></code></pre>
   }
   tag 'snippet' do |tag|
@@ -541,6 +657,7 @@ module StandardTags
     the snippet is called as a double tag.
 
     *Usage (within a snippet):*
+    
     <pre><code>
     <div id="outer">
       <p>before</p>
@@ -575,6 +692,7 @@ module StandardTags
     @url@s may be relative or absolute paths.
 
     *Usage:*
+
     <pre><code><r:find url="value_to_find">...</r:find></code></pre>
   }
   tag 'find' do |tag|
@@ -592,6 +710,7 @@ module StandardTags
     Randomly renders one of the options specified by the @option@ tags.
 
     *Usage:*
+
     <pre><code><r:random>
       <r:option>...</r:option>
       <r:option>...</r:option>
@@ -615,6 +734,7 @@ module StandardTags
     Nothing inside a set of comment tags is rendered.
 
     *Usage:*
+
     <pre><code><r:comment>...</r:comment></code></pre>
   }
   tag 'comment' do |tag|
@@ -624,6 +744,7 @@ module StandardTags
     Escapes angle brackets, etc. for rendering in an HTML document.
 
     *Usage:*
+
     <pre><code><r:escape_html>...</r:escape_html></code></pre>
   }
   tag "escape_html" do |tag|
@@ -634,6 +755,7 @@ module StandardTags
     Outputs the published date using the format mandated by RFC 1123. (Ideal for RSS feeds.)
 
     *Usage:*
+
     <pre><code><r:rfc1123_date /></code></pre>
   }
   tag "rfc1123_date" do |tag|
@@ -652,10 +774,15 @@ module StandardTags
        page's URL
     * @selected@ specifies the state of the link when the current page matches
        is a child of the specified url
+    # @if_last@ renders its contents within a @normal@, @here@ or
+      @selected@ tag if the item is the last in the navigation elements
+    # @if_first@ renders its contents within a @normal@, @here@ or
+      @selected@ tag if the item is the first in the navigation elements
 
     The @between@ tag specifies what should be inserted in between each of the links.
 
     *Usage:*
+
     <pre><code><r:navigation urls="[Title: url | Title: url | ...]">
       <r:normal><a href="<r:url />"><r:title /></a></r:normal>
       <r:here><strong><r:title /></strong></r:here>
@@ -675,11 +802,13 @@ module StandardTags
       key = parts.join(':')
       [key.strip, value.strip]
     end
-    pairs.each do |title, url|
+    pairs.each_with_index do |(title, url), i|
       compare_url = remove_trailing_slash(url)
       page_url = remove_trailing_slash(self.url)
       hash[:title] = title
       hash[:url] = url
+      tag.locals.first_child = i == 0
+      tag.locals.last_child = i == pairs.length - 1
       case page_url
       when compare_url
         result << (hash[:here] || hash[:selected] || hash[:normal]).call
@@ -706,9 +835,34 @@ module StandardTags
   end
 
   desc %{
+    Renders the containing elements if the element is the first
+    in the navigation list
+
+    *Usage:*
+
+    <pre><code><r:normal><r:if_first>...</r:if_first></r:normal></code></pre>
+  }
+  tag 'navigation:if_first' do |tag|
+    tag.expand if tag.locals.first_child
+  end
+
+  desc %{
+    Renders the containing elements if the element is the last
+    in the navigation list
+
+    *Usage:*
+
+    <pre><code><r:normal><r:if_last>...</r:if_last></r:normal></code></pre>
+  }
+  tag 'navigation:if_last' do |tag|
+    tag.expand if tag.locals.last_child
+  end
+
+  desc %{
     Renders the containing elements only if Radiant in is development mode.
 
     *Usage:*
+
     <pre><code><r:if_dev>...</r:if_dev></code></pre>
   }
   tag 'if_dev' do |tag|
@@ -719,6 +873,7 @@ module StandardTags
     The opposite of the @if_dev@ tag.
 
     *Usage:*
+
     <pre><code><r:unless_dev>...</r:unless_dev></code></pre>
   }
   tag 'unless_dev' do |tag|
@@ -730,6 +885,7 @@ module StandardTags
     will cause the status to be all lowercase.
 
     *Usage:*
+
     <pre><code><r:status [downcase='true'] /></code></pre>
   }
   tag 'status' do |tag|
@@ -828,7 +984,7 @@ module StandardTags
       end
       options[:order] = order_string
 
-      status = (attr[:status] || 'published').downcase
+      status = (attr[:status] || ( dev?(tag.globals.page.request) ? 'all' : 'published')).downcase
       unless status == 'all'
         stat = Status[status]
         unless stat.nil?
@@ -861,7 +1017,7 @@ module StandardTags
     end
 
     def relative_url_for(url, request)
-      File.join(request.relative_url_root, url)
+      File.join(ActionController::Base.relative_url_root || '', url)
     end
 
     def absolute_path_for(base_path, new_path)
@@ -892,7 +1048,10 @@ module StandardTags
     end
 
     def dev?(request)
-      dev_host = Radiant::Config['dev.host']
-      request && ((dev_host && dev_host == request.host) || request.host =~ /^dev\./)
+      if dev_host = Radiant::Config['dev.host']
+        dev_host == request.host
+      else
+        request.host =~ /^dev\./
+      end
     end
 end

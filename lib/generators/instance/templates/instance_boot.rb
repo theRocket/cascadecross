@@ -3,10 +3,19 @@
 
 RAILS_ROOT = File.expand_path("#{File.dirname(__FILE__)}/..") unless defined?(RAILS_ROOT)
 
+module Rails
+  class << self
+    def vendor_rails?
+      File.exist?("#{RAILS_ROOT}/vendor/rails")
+    end
+  end
+end
+
 module Radiant
   class << self
     def boot!
       unless booted?
+        preinitialize
         pick_boot.run
       end
     end
@@ -33,16 +42,23 @@ module Radiant
     def app?
       File.exist?("#{RAILS_ROOT}/lib/radiant.rb")
     end
+
+    def preinitialize
+      load(preinitializer_path) if File.exist?(preinitializer_path)
+    end
     
     def loaded_via_gem?
       pick_boot.is_a? GemBoot
+    end
+
+    def preinitializer_path
+      "#{RAILS_ROOT}/config/preinitializer.rb"
     end
   end
 
   class Boot
     def run
       load_initializer
-      Radiant::Initializer.run(:set_load_path)
     end
     
     def load_initializer
@@ -53,6 +69,7 @@ module Radiant
         $stderr.puts %(Radiant could not be initialized. #{load_error_message})
         exit 1
       end
+      Radiant::Initializer.run(:set_load_path)
     end
   end
 
@@ -61,7 +78,7 @@ module Radiant
       $LOAD_PATH.unshift "#{RAILS_ROOT}/vendor/radiant/lib" 
       super
     end
-    
+        
     def load_error_message
       "Please verify that vendor/radiant contains a complete copy of the Radiant sources."
     end
@@ -72,7 +89,7 @@ module Radiant
       $LOAD_PATH.unshift "#{RAILS_ROOT}/lib" 
       super
     end
-    
+
     def load_error_message
       "Please verify that you have a complete copy of the Radiant sources."
     end
@@ -84,9 +101,9 @@ module Radiant
       load_radiant_gem
       super
     end
-
+      
     def load_error_message
-      "Please reinstall the Radiant gem with the command 'gem install radiant'."
+     "Please reinstall the Radiant gem with the command 'gem install radiant'."
     end
 
     def load_radiant_gem
@@ -129,7 +146,7 @@ module Radiant
       end
 
       def parse_gem_version(text)
-        $1 if text =~ /^[^#]*RADIANT_GEM_VERSION\s*=\s*'([!~<>=]*\s*[\d.]+)'/
+        $1 if text =~ /^[^#]*RADIANT_GEM_VERSION\s*=\s*["']([!~<>=]*\s*[\d.]+)["']/
       end
 
       private

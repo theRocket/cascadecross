@@ -27,8 +27,48 @@ describe Radiant::Configuration do
     @configuration.extension_paths.should include("#{RADIANT_ROOT}/vendor/extensions") 
   end
   
+  it "should initialize the extensions" do
+    @configuration.extensions.should be_kind_of(Array)
+    @configuration.extensions.should include(:archive, :textile_filter, :markdown_filter) 
+  end
+  
+  it "should remove excluded extensions" do
+    @configuration.extensions -= [:archive]
+    @configuration.extensions.should be_kind_of(Array)
+    @configuration.extensions.should_not include(:archive) 
+  end
+  
+  it "should have extensions only found in extension paths" do
+    @configuration.extension_paths = [RADIANT_ROOT + "/test/fixtures/extensions"]
+    @configuration.extensions.should include(:basic, :overriding, :load_order_green) 
+    @configuration.extensions.should_not include(:archive, :textile_filter, :markdown_filter) 
+  end
+  
   it "should have access to the AdminUI" do
     @configuration.admin.should == Radiant::AdminUI.instance
+  end
+
+  it "should initialize extension dependencies" do
+    @configuration.extension_dependencies.should eql([])
+  end
+
+  it "should add extension dependencies" do
+    @configuration.extension('basic')
+    @configuration.extension_dependencies.should eql(['basic'])
+  end
+
+  it "should validate dependencies" do
+    @configuration.extensions = [BasicExtension]
+    @configuration.extension('basic')
+    @configuration.check_extension_dependencies.should be_true
+  end
+
+  it "should report missing dependencies" do
+    @configuration.extensions = [BasicExtension]
+    @configuration.extension('does_not_exist')
+    lambda {
+      @configuration.check_extension_dependencies
+    }.should raise_error(SystemExit)
   end
 end
 
@@ -70,11 +110,22 @@ describe Radiant::Initializer do
   end
   
   it "should initialize admin tabs" do
+    Radiant::AdminUI.instance.should_receive(:load_default_nav)
     @initializer.initialize_default_admin_tabs
-    Radiant::AdminUI.instance.tabs.size.should == 3
   end
   
   it "should have access to the AdminUI" do
     @initializer.admin.should == Radiant::AdminUI.instance
   end
+
+  it "should load metal from RADIANT_ROOT and exensions" do
+    Rails::Rack::Metal.metal_paths.should == ["#{RADIANT_ROOT}/app/metal", "#{RADIANT_ROOT}/test/fixtures/extensions/02_overriding/app/metal", "#{RADIANT_ROOT}/test/fixtures/extensions/01_basic/app/metal"]
+  end
+
+  it "should check dependent extensions" do
+    @initializer.configuration.frameworks = [] # ActionMailer not loaded at this point
+    @initializer.configuration.should_receive(:check_extension_dependencies)
+    @initializer.after_initialize
+  end
+
 end

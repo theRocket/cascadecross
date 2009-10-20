@@ -1,12 +1,12 @@
 require File.dirname(__FILE__) + "/../../spec_helper"
 
 describe Admin::WelcomeController do
-  scenario :users
+  dataset :users
   
   it "should redirect to page tree on get to /admin/welcome" do
     get :index
     response.should be_redirect
-    response.should redirect_to(page_index_url)
+    response.should redirect_to(admin_pages_path)
   end
   
   it "should render the login screen on get to /admin/login" do
@@ -23,15 +23,15 @@ describe Admin::WelcomeController do
   end
   
   it "should render the login template when login failed" do
+    controller.should_receive(:announce_invalid_user) # Can't test flash.now!
     post :login, :user => {:login => "admin", :password => "wrong"}
     response.should render_template("login")
-    flash[:error].should_not be_nil
   end
   
   describe "remember me" do
 
     before do
-      Radiant::Config.stub!(:[]).with('session_timeout').and_return(2.weeks)
+      Radiant::Config['session_timeout'] = 2.weeks
       @user = users(:admin)
       controller.stub!(:current_user).and_return(@user)
     end
@@ -86,4 +86,13 @@ describe Admin::WelcomeController do
       end
     end
   end
+
+  describe "without a user" do
+    it "should gracefully handle logout" do
+      controller.stub!(:current_member).and_return(nil)
+      get :logout
+      response.should redirect_to(login_url)
+    end
+  end
+
 end

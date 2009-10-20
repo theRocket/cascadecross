@@ -1,0 +1,18 @@
+%h1 Remove User
+
+%p 
+  Are you sure you want to 
+  %strong.warning permanently remove
+  the following user?
+
+%table.index#users
+  %tbody
+    %tr.node.level_1
+      %td.user
+        %span.title= @user.name
+
+- form_for [:admin, @user], :html => { :method => :delete, 'data-onsubmit_status'=>"Removing user&#8230;" } do
+  %p.buttons
+    %input.button{:type=>"submit", :value=>"Delete User"}/
+    or
+    = link_to 'Cancel', admin_users_path

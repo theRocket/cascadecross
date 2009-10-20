@@ -1,5 +1,5 @@
 # This file is auto-generated from the current state of the database. Instead of editing this file, 
-# please use the migrations feature of ActiveRecord to incrementally modify your database, and
+# please use the migrations feature of Active Record to incrementally modify your database, and
 # then regenerate this schema definition.
 #
 # Note that this schema.rb definition is the authoritative source for your database schema. If you need
@@ -9,7 +9,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 21) do
+ActiveRecord::Schema.define(:version => 20090929164633) do
 
   create_table "config", :force => true do |t|
     t.string "key",   :limit => 40, :default => "", :null => false
@@ -93,6 +93,8 @@ ActiveRecord::Schema.define(:version => 21) do
     t.integer "page_id"
   end
 
+  add_index "page_parts", ["page_id", "name"], :name => "parts_by_page"
+
   create_table "pages", :force => true do |t|
     t.string   "title"
     t.string   "slug",          :limit => 100
@@ -111,6 +113,11 @@ ActiveRecord::Schema.define(:version => 21) do
     t.string   "description"
     t.string   "keywords"
   end
+
+  add_index "pages", ["class_name"], :name => "pages_class_name"
+  add_index "pages", ["parent_id"], :name => "pages_parent_id"
+  add_index "pages", ["slug", "parent_id"], :name => "pages_child_slug"
+  add_index "pages", ["virtual", "status_id"], :name => "pages_published"
 
   create_table "sessions", :force => true do |t|
     t.string   "session_id"
@@ -144,7 +151,7 @@ ActiveRecord::Schema.define(:version => 21) do
     t.integer  "created_by_id"
     t.integer  "updated_by_id"
     t.boolean  "admin",                        :default => false, :null => false
-    t.boolean  "developer",                    :default => false, :null => false
+    t.boolean  "designer",                     :default => false, :null => false
     t.text     "notes"
     t.integer  "lock_version",                 :default => 0
     t.string   "salt"

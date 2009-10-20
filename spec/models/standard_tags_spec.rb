@@ -1,7 +1,7 @@
 require File.dirname(__FILE__) + '/../spec_helper'
 
 describe "Standard Tags" do
-  scenario :users_and_pages, :file_not_found, :snippets
+  dataset :users_and_pages, :file_not_found, :snippets
 
   it '<r:page> should allow access to the current page' do
     page(:home)
@@ -14,6 +14,11 @@ describe "Standard Tags" do
       value = page.send(attr)
       page.should render("<r:#{attr} />").as(value.to_s)
     end
+  end
+
+  it "<r:url> with a nil relative URL root should scope to the relative root of /" do
+    ActionController::Base.relative_url_root = nil
+    page(:home).should render("<r:url />").as("/")
   end
 
   it '<r:url> with a relative URL root should scope to the relative root' do
@@ -55,14 +60,23 @@ describe "Standard Tags" do
       page(:assorted).should render(page_children_each_tags).as('a b c d e f g h i j ')
     end
 
-    it 'should not list virtual pages' do
+    it 'should not list draft pages' do
       page.should render('<r:children:each by="title"><r:slug /> </r:children:each>').as('a b c d e f g h i j ')
     end
     
-    it 'should include virtual pages with status="all"' do
+    it 'should include draft pages with status="all"' do
       page.should render('<r:children:each status="all" by="slug"><r:slug /> </r:children:each>').as('a b c d draft e f g h i j ')
     end
 
+    it "should include draft pages by default on the dev host" do
+      page.should render('<r:children:each by="slug"><r:slug /> </r:children:each>').as('a b c d draft e f g h i j ').on('dev.site.com')
+    end
+    
+    it 'should not list draft pages on dev.site.com when Radiant::Config["dev.host"] is set to something else' do
+      Radiant::Config['dev.host'] = 'preview.site.com'
+      page.should render('<r:children:each by="title"><r:slug /> </r:children:each>').as('a b c d e f g h i j ').on('dev.site.com')
+    end
+    
     it 'should error with invalid "limit" attribute' do
       message = "`limit' attribute of `each' tag must be a positive number between 1 and 4 digits"
       page.should render(page_children_each_tags(%{limit="a"})).with_error(message)
@@ -72,9 +86,9 @@ describe "Standard Tags" do
 
     it 'should error with invalid "offset" attribute' do
       message = "`offset' attribute of `each' tag must be a positive number between 1 and 4 digits"
-      page.should render(%{offset="a"}).with_error(message)
-      page.should render(%{offset="-10"}).with_error(message)
-      page.should render(%{offset="50000"}).with_error(message)
+      page.should render(page_children_each_tags(%{offset="a"})).with_error(message)
+      page.should render(page_children_each_tags(%{offset="-10"})).with_error(message)
+      page.should render(page_children_each_tags(%{offset="50000"})).with_error(message)
     end
 
     it 'should error with invalid "by" attribute' do
@@ -126,6 +140,37 @@ describe "Standard Tags" do
     end
   end
 
+  describe "<r:children:each:if_first>" do
+    it "should render for the first child" do
+      tags = '<r:children:each><r:if_first>FIRST:</r:if_first><r:slug /> </r:children:each>'
+      expected = "FIRST:article article-2 article-3 article-4 "
+      page(:news).should render(tags).as(expected)
+    end
+  end
+
+  describe "<r:children:each:unless_first>" do
+    it "should render for all but the first child" do
+      tags = '<r:children:each><r:unless_first>NOT-FIRST:</r:unless_first><r:slug /> </r:children:each>'
+      expected = "article NOT-FIRST:article-2 NOT-FIRST:article-3 NOT-FIRST:article-4 "
+      page(:news).should render(tags).as(expected)
+    end
+  end
+
+  describe "<r:children:each:if_last>" do
+    it "should render for the last child" do
+      tags = '<r:children:each><r:if_last>LAST:</r:if_last><r:slug /> </r:children:each>'
+      expected = "article article-2 article-3 LAST:article-4 "
+      page(:news).should render(tags).as(expected)
+    end
+  end
+
+  describe "<r:children:each:unless_last>" do
+    it "should render for all but the last child" do
+      tags = '<r:children:each><r:unless_last>NOT-LAST:</r:unless_last><r:slug /> </r:children:each>'
+      expected = "NOT-LAST:article NOT-LAST:article-2 NOT-LAST:article-3 article-4 "
+      page(:news).should render(tags).as(expected)
+    end
+  end
 
   describe "<r:children:each:header>" do
     it "should render the header when it changes" do
@@ -153,8 +198,17 @@ describe "Standard Tags" do
     end
   end
 
-  it '<r:children:count> should render the number of children of the current page' do
-    page(:parent).should render('<r:children:count />').as('3')
+  describe "<r:children:count>" do
+    it 'should render the number of children of the current page' do
+      page(:parent).should render('<r:children:count />').as('3')
+    end
+    
+    it "should accept the same scoping conditions as <r:children:each>" do
+      page.should render('<r:children:count />').as('10')
+      page.should render('<r:children:count status="all" />').as('11')
+      page.should render('<r:children:count status="draft" />').as('1')
+      page.should render('<r:children:count status="hidden" />').as('0')
+    end
   end
 
   describe "<r:children:first>" do
@@ -202,6 +256,15 @@ describe "Standard Tags" do
 
     it "with 'part' attribute should render the specified part" do
       page(:home).should render('<r:content part="extended" />').as("Just a test.")
+    end
+
+    it "should prevent simple recursion" do
+      page(:recursive_parts).should render('<r:content />').with_error("Recursion error: already rendering the `body' part.")
+    end
+
+    it "should prevent deep recursion" do
+      page(:recursive_parts).should render('<r:content part="one"/>').with_error("Recursion error: already rendering the `one' part.")
+      page(:recursive_parts).should render('<r:content part="two"/>').with_error("Recursion error: already rendering the `two' part.")
     end
 
     describe "with inherit attribute" do
@@ -421,10 +484,10 @@ describe "Standard Tags" do
       end
     end
 
-    it "should use the configured local timezone" do
-      Radiant::Config["local.timezone"] = "Tokyo"
+    it "should use the currently set timezone" do
+      Time.zone = "Tokyo"
       format = "%H:%m"
-      expected = TimeZone["Tokyo"].adjust(page.published_at).strftime(format)
+      expected = page.published_at.in_time_zone(ActiveSupport::TimeZone['Tokyo']).strftime(format)
       page.should render(%Q(<r:date format="#{format}" />) ).as(expected)
     end
   end
@@ -471,7 +534,7 @@ describe "Standard Tags" do
     end
 
     it "should filter the snippet with its assigned filter" do
-      page.should render('<r:page><r:snippet name="markdown" /></r:page>').as('<p><strong>markdown</strong></p>')
+      page.should render('<r:page><r:snippet name="markdown" /></r:page>').matching(%r{<p><strong>markdown</strong></p>})
     end
 
     it "should maintain the global page inside the snippet" do
@@ -591,6 +654,36 @@ describe "Standard Tags" do
                  <r:between> | </r:between>
                </r:navigation>}
       expected = %{<strong><a href="/">Home: Boy</a></strong> | <a href="/archive/">Archives</a> | <a href="/documentation/">Docs</a>}
+      page(:radius).should render(tags).as(expected)
+    end
+
+    it 'should render text under <r:if_first> and <r:if_last> only on the first and last item, respectively' do
+      tags = %{<r:navigation urls="Home: / | Assorted: /assorted | Parent: /parent | Radius: /radius">
+                 <r:normal><r:if_first>(</r:if_first><a href="<r:url />"><r:title /></a><r:if_last>)</r:if_last></r:normal>
+                 <r:here><r:if_first>(</r:if_first><r:title /><r:if_last>)</r:if_last></r:here>
+                 <r:selected><r:if_first>(</r:if_first><strong><a href="<r:url />"><r:title /></a></strong><r:if_last>)</r:if_last></r:selected>
+               </r:navigation>}
+      expected = %{(<strong><a href=\"/\">Home</a></strong> <a href=\"/assorted\">Assorted</a> <a href=\"/parent\">Parent</a> Radius)}
+      page(:radius).should render(tags).as(expected)
+    end
+
+    it 'should render text under <r:unless_first> on every item but the first' do
+      tags = %{<r:navigation urls="Home: / | Assorted: /assorted | Parent: /parent | Radius: /radius">
+                 <r:normal><r:unless_first>&gt; </r:unless_first><a href="<r:url />"><r:title /></a></r:normal>
+                 <r:here><r:unless_first>&gt; </r:unless_first><r:title /></r:here>
+                 <r:selected><r:unless_first>&gt; </r:unless_first><strong><a href="<r:url />"><r:title /></a></strong></r:selected>
+               </r:navigation>}
+      expected = %{<strong><a href=\"/\">Home</a></strong> &gt; <a href=\"/assorted\">Assorted</a> &gt; <a href=\"/parent\">Parent</a> &gt; Radius}
+      page(:radius).should render(tags).as(expected)
+    end
+
+    it 'should render text under <r:unless_last> on every item but the last' do
+      tags = %{<r:navigation urls="Home: / | Assorted: /assorted | Parent: /parent | Radius: /radius">
+                 <r:normal><a href="<r:url />"><r:title /></a><r:unless_last> &gt;</r:unless_last></r:normal>
+                 <r:here><r:title /><r:unless_last> &gt;</r:unless_last></r:here>
+                 <r:selected><strong><a href="<r:url />"><r:title /></a></strong><r:unless_last> &gt;</r:unless_last></r:selected>
+               </r:navigation>}
+      expected = %{<strong><a href=\"/\">Home</a></strong> &gt; <a href=\"/assorted\">Assorted</a> &gt; <a href=\"/parent\">Parent</a> &gt; Radius}
       page(:radius).should render(tags).as(expected)
     end
   end
@@ -912,7 +1005,7 @@ describe "Standard Tags" do
         @page = pages(symbol)
       end
     end
-
+    
     def page_children_each_tags(attr = nil)
       attr = ' ' + attr unless attr.nil?
       "<r:children:each#{attr}><r:slug /> </r:children:each>"

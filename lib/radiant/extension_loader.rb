@@ -61,12 +61,16 @@ module Radiant
     end
 
     def view_paths
-      extensions.map { |extension| "#{extension.root}/app/views" }.select { |d| File.directory?(d) }
+      extensions.map { |extension| "#{extension.root}/app/views" }.select { |d| File.directory?(d) }.reverse
+    end
+    
+    def metal_paths
+      load_extension_roots.map { |extension| "#{extension}/app/metal" }.select { |d| File.directory?(d) }.reverse
     end
 
     # Load the extensions
     def load_extensions
-      @observer ||= DependenciesObserver.new(configuration).observe(::Dependencies)
+      @observer ||= DependenciesObserver.new(configuration).observe(::ActiveSupport::Dependencies)
       self.extensions = load_extension_roots.map do |root|
         begin
           extension_file = "#{File.basename(root).sub(/^\d+_/,'')}_extension"
@@ -101,7 +105,7 @@ module Radiant
 
       def load_paths_for(dir)
         if File.directory?(dir)
-          %w(lib app/models app/controllers app/helpers test/helpers).collect do |p|
+          %w(lib app/models app/controllers app/metal app/helpers test/helpers).collect do |p|
             path = "#{dir}/#{p}"
             path if File.directory?(path)
           end.compact << dir

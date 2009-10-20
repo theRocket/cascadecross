@@ -1,0 +1,35 @@
+- @page_title = 'Layouts - ' + default_page_title
+
+.outset
+  = render_region :top
+  %table#layouts.index
+    %thead
+      %tr
+        - render_region :thead do |thead|
+          - thead.title_header do
+            %th.layout
+              Layout
+          - thead.modify_header do
+            %th.modify
+              Modify
+    %tbody
+      - if @layouts.any?
+        - @layouts.each do |layout|
+          %tr.node.level_1
+            - render_region :tbody do |tbody|
+              - tbody.title_cell do
+                %td.layout
+                  = image('layout', :alt => '')
+                  = link_to layout.name, edit_admin_layout_url(layout)
+              - tbody.modify_cell do
+                %td.remove
+                  = link_to image('remove', :alt => 'Remove Layout'), remove_admin_layout_url(layout)
+      - else
+        %tr
+          %td.note{:colspan => admin.layout.index.tbody.length} No Layouts
+
+- render_region :bottom do |bottom|
+  - bottom.new_button do
+    #actions
+      %ul
+        %li= link_to "New Layout", new_admin_layout_url
