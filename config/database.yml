@@ -5,10 +5,9 @@
 
 development:
   adapter: mysql
-  database: radiant_dev
+  database: ccx_dev
   username: root
   password:
-  socket: /tmp/mysql.sock
 
 test:
   adapter: mysql
