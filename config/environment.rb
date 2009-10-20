@@ -30,7 +30,9 @@ Radiant::Initializer.run do |config|
   # can be used as a placeholder for all extensions not explicitly named.
   # config.extensions = [ :all ]
   
-  #for feed_reader extension, may not work due to native extensions
+  #for feed_reader extension, lib loading to handle native extensions
+  config.load_paths << "#{RAILS_ROOT}/vendor/gems/nokogiri-1.3.3/lib"
+  config.load_paths << "#{RAILS_ROOT}/vendor/gems/nokogiri-1.3.3/lib/#{RUBY_PLATFORM}"
   config.gem "nokogiri", :version => "1.3.3"
   config.gem "pauldix-feedzirra", :version => "0.0.18", :lib => "feedzirra", :source => "http://gems.github.com"
   config.gem "pauldix-sax-machine", :version => "0.0.14", :lib => "sax-machine", :source => "http://gems.github.com"
