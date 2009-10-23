@@ -29,7 +29,6 @@ Radiant::Initializer.run do |config|
   # extensions in vendor/extensions are loaded, in alphabetical order. :all
   # can be used as a placeholder for all extensions not explicitly named.
   # config.extensions = [ :all ]
-  config.gem "pauldix-feedzirra", :version => "0.0.18", :lib => "feedzirra", :source => "http://gems.github.com"
   
   # Your secret key for verifying cookie session data integrity.
   # If you change this key, all old sessions will become invalid!
