@@ -13,6 +13,7 @@ end
 
 # Uncomment below to force Rails into production mode when
 # you don't control web/app server and can't set it the proper way
+ENV['GEM_PATH'] = '/home/therocket/.gems:/usr/lib/ruby/gems/1.8:/usr/local/lib/ruby/gems/1.8'
 ENV['RAILS_ENV'] = 'production'
 
 # Specifies gem version of Rails to use when vendor/rails is not present
